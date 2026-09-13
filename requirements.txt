@@ -1,0 +1,9 @@
+# Analysis of stored results and paper figures (CPU is enough)
+numpy
+matplotlib
+
+# Training: runs inside the Modal image defined in research/modal_research.py,
+# which pins gliner2[local]==2.0.0. Install locally only to launch or debug runs.
+modal
+torch
+gliner2[local]==2.0.0
