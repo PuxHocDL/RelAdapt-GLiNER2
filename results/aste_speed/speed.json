@@ -1,0 +1,97 @@
+{
+  "n_sentences": 1468,
+  "domains": [
+    "14lap",
+    "14res",
+    "15res",
+    "16res"
+  ],
+  "t5": "google-t5/t5-base",
+  "gpu": "NVIDIA A10",
+  "rows": [
+    {
+      "system": "RelAdapt [fastino/gliner2-base-v1]",
+      "batch_size": 1,
+      "seconds": 29.524,
+      "sent_per_s": 49.7,
+      "ms_per_sent": 20.11,
+      "emitted_pairs": 0
+    },
+    {
+      "system": "RelAdapt [microsoft/deberta-v3-base]",
+      "batch_size": 1,
+      "seconds": 28.692,
+      "sent_per_s": 51.2,
+      "ms_per_sent": 19.54,
+      "emitted_pairs": 0
+    },
+    {
+      "system": "RelAdapt [bert-base-uncased]",
+      "batch_size": 1,
+      "seconds": 15.381,
+      "sent_per_s": 95.4,
+      "ms_per_sent": 10.48,
+      "emitted_pairs": 0
+    },
+    {
+      "system": "RelAdapt [fastino/gliner2-base-v1]",
+      "batch_size": 32,
+      "seconds": 2.85,
+      "sent_per_s": 515.0,
+      "ms_per_sent": 1.94,
+      "emitted_pairs": 0
+    },
+    {
+      "system": "RelAdapt [microsoft/deberta-v3-base]",
+      "batch_size": 32,
+      "seconds": 2.632,
+      "sent_per_s": 557.8,
+      "ms_per_sent": 1.79,
+      "emitted_pairs": 0
+    },
+    {
+      "system": "RelAdapt [bert-base-uncased]",
+      "batch_size": 32,
+      "seconds": 2.036,
+      "sent_per_s": 721.1,
+      "ms_per_sent": 1.39,
+      "emitted_pairs": 0
+    },
+    {
+      "system": "T5-base generation, GAS extraction style",
+      "batch_size": 1,
+      "seconds": 297.404,
+      "sent_per_s": 4.9,
+      "ms_per_sent": 202.59,
+      "mean_target_tokens": 16.952316076294277,
+      "generated_tokens": 24886
+    },
+    {
+      "system": "T5-base generation, MvP style (5 views)",
+      "batch_size": 1,
+      "seconds": 2295.265,
+      "sent_per_s": 0.6,
+      "ms_per_sent": 1563.53,
+      "generated_tokens": 201740,
+      "views": 5
+    },
+    {
+      "system": "T5-base generation, GAS extraction style",
+      "batch_size": 32,
+      "seconds": 29.481,
+      "sent_per_s": 49.8,
+      "ms_per_sent": 20.08,
+      "mean_target_tokens": 16.952316076294277,
+      "generated_tokens": 76100
+    },
+    {
+      "system": "T5-base generation, MvP style (5 views)",
+      "batch_size": 32,
+      "seconds": 239.665,
+      "sent_per_s": 6.1,
+      "ms_per_sent": 163.26,
+      "generated_tokens": 643260,
+      "views": 5
+    }
+  ]
+}

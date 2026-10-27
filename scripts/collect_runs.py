@@ -33,6 +33,17 @@ OUT_DIR = ROOT / os.environ.get("GLINER_ABSA_OUT_DIR", f"results/aste_{DOMAIN}")
 MANIFEST = os.environ.get("GLINER_ABSA_MANIFEST", "call_manifest.json")
 
 
+def _from_volume(domain, preset, seed):
+    import modal
+
+    try:
+        vol = modal.Volume.from_name("gliner2-absa-results")
+        data = b"".join(vol.read_file(f"aste/{domain}/{preset}/seed_{seed}/metrics.json"))
+        return json.loads(data.decode("utf-8"))
+    except Exception:
+        return None
+
+
 def main() -> int:
     manifest = json.loads((OUT_DIR / MANIFEST).read_text(encoding="utf-8"))
     done, pending, failed = [], [], []
@@ -55,9 +66,13 @@ def main() -> int:
         except TimeoutError:
             pending.append(key)
             continue
-        except Exception as exc:                      # a crashed run
-            failed.append((key, f"{type(exc).__name__}: {str(exc)[:160]}"))
-            continue
+        except Exception as exc:                      # a crashed run, or an expired result
+            # aste_run also writes every payload to the results volume, which does
+            # not expire, so a run whose call result is gone is still recoverable.
+            payload = _from_volume(call["domain"], preset, seed)
+            if payload is None:
+                failed.append((key, f"{type(exc).__name__}: {str(exc)[:160]}"))
+                continue
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(
             json.dumps(payload, ensure_ascii=False, indent=2, default=str) + "\n",

@@ -1,0 +1,77 @@
+{
+  "n_sentences": 1468,
+  "domains": [
+    "14lap",
+    "14res",
+    "15res",
+    "16res"
+  ],
+  "emit_all": true,
+  "gpu": "NVIDIA A10",
+  "rows": [
+    {
+      "system": "RelAdapt [microsoft/deberta-v3-base] emit-all",
+      "batch_size": 1,
+      "seconds": 35.923,
+      "sent_per_s": 40.9,
+      "ms_per_sent": 24.47,
+      "emitted_pairs": 146800
+    },
+    {
+      "system": "RelAdapt [bert-base-uncased] emit-all",
+      "batch_size": 1,
+      "seconds": 23.737,
+      "sent_per_s": 61.8,
+      "ms_per_sent": 16.17,
+      "emitted_pairs": 146800
+    },
+    {
+      "system": "RelAdapt [FacebookAI/roberta-base] emit-all",
+      "batch_size": 1,
+      "seconds": 23.744,
+      "sent_per_s": 61.8,
+      "ms_per_sent": 16.17,
+      "emitted_pairs": 146800
+    },
+    {
+      "system": "RelAdapt [microsoft/deberta-v3-large] emit-all",
+      "batch_size": 1,
+      "seconds": 57.19,
+      "sent_per_s": 25.7,
+      "ms_per_sent": 38.96,
+      "emitted_pairs": 146800
+    },
+    {
+      "system": "RelAdapt [microsoft/deberta-v3-base] emit-all",
+      "batch_size": 32,
+      "seconds": 12.363,
+      "sent_per_s": 118.7,
+      "ms_per_sent": 8.42,
+      "emitted_pairs": 146800
+    },
+    {
+      "system": "RelAdapt [bert-base-uncased] emit-all",
+      "batch_size": 32,
+      "seconds": 11.538,
+      "sent_per_s": 127.2,
+      "ms_per_sent": 7.86,
+      "emitted_pairs": 146800
+    },
+    {
+      "system": "RelAdapt [FacebookAI/roberta-base] emit-all",
+      "batch_size": 32,
+      "seconds": 11.209,
+      "sent_per_s": 131.0,
+      "ms_per_sent": 7.64,
+      "emitted_pairs": 146800
+    },
+    {
+      "system": "RelAdapt [microsoft/deberta-v3-large] emit-all",
+      "batch_size": 32,
+      "seconds": 15.977,
+      "sent_per_s": 91.9,
+      "ms_per_sent": 10.88,
+      "emitted_pairs": 146800
+    }
+  ]
+}

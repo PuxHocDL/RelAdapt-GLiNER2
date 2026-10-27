@@ -37,6 +37,11 @@ SAVE_SUFFIX = os.environ.get("GLINER_ABSA_SAVE_SUFFIX", "").strip()
 WARMUP_PCT = float(os.environ.get("GLINER_ABSA_WARMUP_PCT", "0.2"))
 LLRD = float(os.environ.get("GLINER_ABSA_LLRD", "1.0"))
 GATE_LR = float(os.environ.get("GLINER_ABSA_GATE_LR", "0.0"))
+# Same data order for every backbone on a seed (see run_one); needed whenever
+# runs with different encoders are compared seed by seed.
+RNG_NEUTRAL = os.environ.get("GLINER_ABSA_RNG_NEUTRAL", "0") == "1"
+# Empty keeps aste_run's default (2e-5); large encoders use a lower rate.
+ENCODER_LR = os.environ.get("GLINER_ABSA_ENCODER_LR", "").strip()
 OUT_DIR = ROOT / os.environ.get("GLINER_ABSA_OUT_DIR", f"results/aste_{DOMAIN}")
 # collect_runs.py already reads this variable; the launcher ignoring it meant a
 # second launch into the same domain silently overwrote the first one's record.
@@ -57,6 +62,8 @@ def main() -> int:
         "save_suffix": SAVE_SUFFIX,
         "warmup_pct": WARMUP_PCT,
         "llrd": LLRD,
+        "rng_neutral_load": RNG_NEUTRAL,
+        "encoder_lr": float(ENCODER_LR) if ENCODER_LR else None,
         "launched_at": datetime.now(timezone.utc).isoformat(),
         "calls": {},
     }
@@ -67,6 +74,8 @@ def main() -> int:
                 domain=DOMAIN, preset=preset, seed=seed,
                 model_id=MODEL_ID, epochs=EPOCHS, batch_size=BATCH_SIZE,
                 warmup_pct=WARMUP_PCT, llrd=LLRD, gate_lr=GATE_LR, save_as=save_as,
+                **({"rng_neutral_load": True} if RNG_NEUTRAL else {}),
+                **({"encoder_lr": float(ENCODER_LR)} if ENCODER_LR else {}),
             )
             key = f"{save_as or preset}|seed{seed}"
             manifest["calls"][key] = {

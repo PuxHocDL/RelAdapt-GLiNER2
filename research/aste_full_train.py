@@ -618,16 +618,35 @@ def run_one(domain: str, preset: str, seed: int,
             max_length: int = 128, data_root: str = "/root/Data/ASTE",
             warmup_pct: float = 0.1, llrd: float = 1.0,
             gate_lr: float = 0.0, verifier_epochs: int = 10,
-            verifier_lr: float = 1e-3) -> dict:
-    from gliner2 import AutoExtractor
-
+            verifier_lr: float = 1e-3, rng_neutral_load: bool = False) -> dict:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     set_seed(seed)
 
     cfg = AsteConfig.preset(preset)
-    backbone = AutoExtractor.from_pretrained(model_id)
-    encoder = backbone.encoder
-    tokenizer = backbone.processor.tokenizer
+    if model_id.startswith("fastino/"):
+        from gliner2 import AutoExtractor
+        # Loading GLiNER2 draws from the global RNG, so by default its runs shuffle
+        # differently from a plain encoder on the same seed. rng_neutral_load puts
+        # every backbone on the same data order; it is off by default so that
+        # existing GLiNER2 runs stay reproducible.
+        rng_state = torch.get_rng_state()
+        backbone = AutoExtractor.from_pretrained(model_id)
+        encoder = backbone.encoder
+        tokenizer = backbone.processor.tokenizer
+        if rng_neutral_load:
+            torch.set_rng_state(rng_state)
+    else:
+        # Encoder-control arm: the same matching layers on a plain Hugging Face
+        # encoder, which separates the formulation from GLiNER2's IE pretraining.
+        # Loading is RNG-neutral here so the shuffle stream starts at the seed.
+        from transformers import AutoModel, AutoTokenizer
+        if cfg.use_schema_score:
+            raise ValueError("schema-score presets need the GLiNER2 backbone")
+        rng_state = torch.get_rng_state()
+        backbone = None
+        encoder = AutoModel.from_pretrained(model_id)
+        tokenizer = AutoTokenizer.from_pretrained(model_id, use_fast=True)
+        torch.set_rng_state(rng_state)
     cfg.hidden_size = encoder.config.hidden_size
     model = AsteModel(encoder, cfg).to(device)
 
@@ -804,11 +823,13 @@ def run_one(domain: str, preset: str, seed: int,
 
     return {
         "task": "aste_triplet", "domain": domain, "preset": preset, "seed": seed,
-        "model_id": model_id, "config": asdict(cfg),
+        "model_id": model_id, "encoder_type": getattr(encoder.config, "model_type", None),
+        "config": asdict(cfg),
         "params": model.added_parameter_count(),
         "epochs": epochs, "best_epoch": best["epoch"], "dev_f1": best["f1"],
         "encoder_lr": encoder_lr, "head_lr": head_lr, "warmup_pct": warmup_pct,
         "llrd": llrd, "gate_lr": gate_lr, "n_param_groups": len(groups),
+        "rng_neutral_load": rng_neutral_load or not model_id.startswith("fastino/"),
         "test": test, "predictions": predictions, "history": history,
         "dev": dev_eval, "dev_predictions": dev_predictions,
         "tuned_threshold": best_th,

@@ -13,6 +13,12 @@ from pathlib import Path
 import modal
 
 GPU_TYPE = os.environ.get("GLINER_ABSA_GPU", "A100")
+# GLINER_ABSA_GPU=cpu deploys a CPU-only app: since 2026-10 Modal refuses every GPU
+# type on workspaces without a payment method, but CPU still runs on their credit.
+if GPU_TYPE.lower() in ("cpu", "none", ""):
+    GPU_TYPE = None
+RUN_CPU = float(os.environ.get("GLINER_ABSA_CPU", "8" if GPU_TYPE else "16"))
+RUN_TIMEOUT = 14400 if GPU_TYPE else 86400
 
 app = modal.App("gliner2-absa-research")
 
@@ -24,6 +30,9 @@ image = (
         "pyarrow==21.0.0",
         "scikit-learn==1.7.2",
     )
+    # Separate layer so the cached gliner2 layer is reused; DeBERTa-v3's fast
+    # tokenizer is converted from its sentencepiece model on first load.
+    .pip_install("sentencepiece==0.2.0", "protobuf==5.29.4")
     .add_local_dir("Data", remote_path="/root/Data")
     .add_local_dir("research", remote_path="/root/research")
 )
@@ -139,7 +148,7 @@ def read_source(relative: str, max_chars: int = 60000) -> str:
 
 
 @app.function(
-    image=image, gpu=GPU_TYPE, cpu=8, memory=32768, timeout=14400,
+    image=image, gpu=GPU_TYPE, cpu=RUN_CPU, memory=32768, timeout=RUN_TIMEOUT,
     max_containers=10,
     volumes={"/results": results_vol, "/root/.cache/huggingface": hf_vol},
 )
@@ -148,7 +157,7 @@ def aste_run(domain: str = "14res", preset: str = "A0", seed: int = 42,
              batch_size: int = 8, save_as: str = "",
              encoder_lr: float = 2e-5, head_lr: float = 1e-4,
              warmup_pct: float = 0.1, llrd: float = 1.0,
-             gate_lr: float = 0.0) -> dict:
+             gate_lr: float = 0.0, rng_neutral_load: bool = False) -> dict:
     """One full-ASTE configuration x seed: extract triplets, score exact F1."""
     import sys
 
@@ -158,7 +167,7 @@ def aste_run(domain: str = "14res", preset: str = "A0", seed: int = 42,
     payload = run_one(domain=domain, preset=preset, seed=seed, model_id=model_id,
                       epochs=epochs, batch_size=batch_size, data_root="/root/Data/ASTE",
                       encoder_lr=encoder_lr, head_lr=head_lr, warmup_pct=warmup_pct,
-                      llrd=llrd, gate_lr=gate_lr)
+                      llrd=llrd, gate_lr=gate_lr, rng_neutral_load=rng_neutral_load)
     if save_as:
         payload["preset"] = save_as
         payload["base_preset"] = preset
@@ -248,6 +257,27 @@ def aste_fusion_run(domain: str = "15res", arm: str = "F1", seed: int = 42,
           f"adapters={payload['params']['adapters']:,} "
           f"trainable={payload['params']['trainable']:,}", flush=True)
     return payload
+
+
+@app.function(image=image, gpu=GPU_TYPE, cpu=8, memory=32768, timeout=7200,
+              volumes={"/results": results_vol, "/root/.cache/huggingface": hf_vol})
+def aste_speed(encoder_ids: list[str] | None = None, batch_sizes: list[int] | None = None,
+               reladapt_only: bool = False, emit_all: bool = False) -> dict:
+    """Inference cost of RelAdapt versus T5-base generation on the four test sets."""
+    import sys
+
+    sys.path.insert(0, "/root/research")
+    from aste_speed import benchmark
+
+    report = benchmark("/root/Data/ASTE",
+                       encoder_ids=tuple(encoder_ids or ("fastino/gliner2-base-v1",)),
+                       batch_sizes=tuple(batch_sizes or (1, 32)),
+                       reladapt_only=reladapt_only, emit_all=emit_all)
+    out = Path("/results/speed")
+    out.mkdir(parents=True, exist_ok=True)
+    (out / ("speed_emit_all.json" if emit_all else "speed.json")).write_text(json.dumps(report, indent=2) + chr(10), encoding="utf-8")
+    results_vol.commit()
+    return report
 
 
 @app.function(image=image, timeout=600)

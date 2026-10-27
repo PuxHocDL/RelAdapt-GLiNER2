@@ -2,8 +2,12 @@
 numpy
 matplotlib
 
-# Training: runs inside the Modal image defined in research/modal_research.py,
-# which pins gliner2[local]==2.0.0. Install locally only to launch or debug runs.
+# Training: runs inside the Modal image defined in research/modal_research.py.
+# Install locally only to launch or debug runs. gliner2 is needed only for the
+# GLiNER2-initialised encoder (-enc-gl2 and the development experiments).
 modal
 torch
+transformers
+sentencepiece==0.2.0
+protobuf==5.29.4
 gliner2[local]==2.0.0

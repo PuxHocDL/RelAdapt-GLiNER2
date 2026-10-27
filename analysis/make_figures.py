@@ -63,13 +63,19 @@ def consensus_stats(arm, seeds, split):
 
 
 def main() -> None:
+    import os
+
+    # Defaults reproduce the GLiNER2 figure; the backbone paper overrides them.
+    arm_a = os.environ.get("FIG_ARM_A", "R1bm-cf")
+    arm_bc = os.environ.get("FIG_ARM_BC", "R1bm-cs")
+    stats = HERE / os.environ.get("FIG_STATS", "paper_stats.json")
     IMAGES.mkdir(exist_ok=True)
-    primary = ("R1bm-cf", set(range(62, 67)), "dev")
-    replications = [("R1bm-cs", set(range(67, 72)), "dev"), ("R1bm-cs", set(range(72, 77)), "dev"),
-                    ("R1bm-cs", set(range(67, 72)), "test"), ("R1bm-cs", set(range(72, 77)), "test")]
+    primary = (arm_a, set(range(62, 67)), "dev")
+    replications = [(arm_bc, set(range(67, 72)), "dev"), (arm_bc, set(range(72, 77)), "dev"),
+                    (arm_bc, set(range(67, 72)), "test"), (arm_bc, set(range(72, 77)), "test")]
     tp, fp, means = consensus_stats(*primary)
     reps = [consensus_stats(*r)[2] for r in replications]
-    curve = json.loads((HERE / "paper_stats.json").read_text(encoding="utf-8"))
+    curve = json.loads(stats.read_text(encoding="utf-8"))
 
     fig, axes = plt.subplots(1, 3, figsize=(7.16, 1.95), gridspec_kw=dict(width_ratios=[1, 1, 1.1]))
 
@@ -128,7 +134,7 @@ def main() -> None:
     for ax in axes:
         ax.spines[["top", "right"]].set_visible(False)
     fig.tight_layout(pad=0.3, w_pad=1.0)
-    out = IMAGES / "stability-analysis.pdf"
+    out = IMAGES / os.environ.get("FIG_OUT", "stability-analysis.pdf")
     fig.savefig(out, bbox_inches="tight")
     print("wrote", out)
     print("E[c|TP], E[c|FP] =", round(e_tp, 2), round(e_fp, 2))

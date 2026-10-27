@@ -24,6 +24,8 @@ monitor_state.json
 
 # Unrelated paper used as a formatting template
 RIVF/
+# Reference papers kept locally, not ours to redistribute
+/*.pdf
 
 # ---------------------------------------------------------------------------
 # Only experiments reported in the paper are published. Earlier explorations,
@@ -35,7 +37,12 @@ docs/
 results/**
 !results/**/
 
-# Main results and stability analysis
+# Backbone study: every configuration on BERT, RoBERTa, DeBERTa-v3-base/large and the
+# GLiNER2-initialised encoder, seeds 62-76, identical mini-batch order (main results)
+!results/aste_*/*-enc-*/**
+!results/aste_speed/speed.json
+!results/aste_speed/speed_emit_all.json
+# Earlier GLiNER2-encoder runs: development experiments and stability analysis
 !results/aste_*/B2h-cf/**
 !results/aste_*/R1bm-cf/**
 !results/aste_*/R1bm-cs/**
@@ -74,6 +81,9 @@ results/**
 !results/aste_errors/j_decomposition.json
 # re-apply after the negations above
 results/**/call_manifest*.json
+results/backbone_moves.json
+results/aste_speed/emit_all_call.json
+analysis/*.log
 
 # Code used only by experiments that are not in the paper
 research/aste_adapter.py
